@@ -57,10 +57,10 @@ See the examples directory for a complete training script that demonstrates how 
 
 Main client for communicating with Transformer Lab.
 
-- `start_job(config)`: Register a training job and get a job ID
+- `start(config)`: Register a training job and get a job ID
 - `report_progress(progress, metrics=None)`: Report training progress (0-100) and any metrics in json format
-- `complete_job(message="Training completed successfully")`: Mark job as complete
-- `stop_job(message="Training stopped")`: Mark job as stopped
+- `complete(message="Training completed successfully")`: Mark job as complete
+- `stop(message="Training stopped")`: Mark job as stopped
 - `save_model(saved_model_path)`: Save model to specified path
 - `log_info(message)`: Log info message
 - `log_error(message)`: Log error message
