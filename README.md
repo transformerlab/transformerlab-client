@@ -23,7 +23,7 @@ from transformerlab_client.client import TransformerLabClient
 from transformerlab_client.callbacks.hf_callback import TLabProgressCallback
 
 # Initialize client and register job
-client = TransformerLabClient(server_url=<ENTER YOUR TRANSFORMER LAB API URL>)
+client = TransformerLabClient(server_url="<ENTER YOUR TRANSFORMER LAB API URL>")
 job_id = client.start_job(your_config)
 
 # Set up Hugging Face trainer with TLabProgressCallback
