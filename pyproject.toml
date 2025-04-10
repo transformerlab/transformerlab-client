@@ -1,0 +1,22 @@
+[project]
+name = "transformerlab-client"
+version = "0.0.1"
+description = "Python SDK client for running remote jobs on Transformer Lab."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Transformer Lab Inc.", email = "developers@transformerlab.ai" },
+]
+license = { file = "LICENSE" }
+dependencies = ["transformers"]
+
+[project.urls]
+"Homepage" = "https://github.com/transformerlab/transformerlab-client"
+"Bug Tracker" = "https://github.com/transformerlab/transformerlab-client/issues"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["transformerlab_client", "transformerlab_client.callbacks"]
