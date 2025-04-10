@@ -1,6 +1,6 @@
 # transformerlab-client
 
-Python client and callbacks for [TransformerLab](https://github.com/transformerlab).
+Python client and callbacks for [Transformer Lab](https://github.com/transformerlab).
 
 ## Install
 
@@ -24,7 +24,7 @@ from transformerlab_client.callbacks.hf_callback import TLabProgressCallback
 
 # Initialize client and register job
 client = TransformerLabClient(server_url="<ENTER YOUR TRANSFORMER LAB API URL>")
-job_id = client.start_job(your_config)
+job_id = client.start(your_config)
 
 # Set up Hugging Face trainer with TLabProgressCallback
 training_args = TrainingArguments(
@@ -37,14 +37,14 @@ trainer = Trainer(
     args=training_args,
     train_dataset=train_dataset,
     # other arguments...
-    callbacks=[TLabProgressCallback(client)]  # Add TransformerLab callback
+    callbacks=[TLabProgressCallback(client)]  # Add Transformer Lab callback
 )
 
 # Train the model
 trainer.train()
 
 # Complete the job
-client.complete_job()
+client.complete()
 ```
 
 ### Full Training Example
@@ -55,7 +55,7 @@ See the examples directory for a complete training script that demonstrates how 
 
 ### TransformerLabClient
 
-Main client for communicating with TransformerLab.
+Main client for communicating with Transformer Lab.
 
 - `start_job(config)`: Register a training job and get a job ID
 - `report_progress(progress, metrics=None)`: Report training progress (0-100) and any metrics in json format
@@ -69,4 +69,4 @@ Main client for communicating with TransformerLab.
 
 ### TLabProgressCallback
 
-Callback for Hugging Face Transformers Trainer that reports progress to TransformerLab.
+Callback for Hugging Face Transformers Trainer that reports progress to Transformer Lab.

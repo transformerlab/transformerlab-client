@@ -14,7 +14,7 @@ class TLabProgressCallback(TrainerCallback):
                     "step": state.global_step,
                     "train/loss": state.log_history[-1]["loss"] if state.log_history else None,
                 }
-                # Report progress to TransformerLab
+                # Report progress to Transformer Lab
                 if not self.tlab_client.report_progress(progress, metrics):
                     # Job was stopped remotely
                     control.should_training_stop = True

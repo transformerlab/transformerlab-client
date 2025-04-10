@@ -9,7 +9,7 @@ from logging.handlers import RotatingFileHandler
 
 
 class TransformerLabClient:
-    """Client for reporting training progress to TransformerLab via XML-RPC"""
+    """Client for reporting training progress to Transformer Lab via XML-RPC"""
 
     def __init__(self, server_url="http://localhost:8338/trainer_rpc", log_file=None):
         """Initialize the XML-RPC client"""
@@ -20,22 +20,22 @@ class TransformerLabClient:
         self.report_interval = 1  # seconds
         self.log_file = log_file
 
-    def start_job(self, config):
-        """Register job with TransformerLab and get a job ID"""
+    def start(self, config):
+        """Register job with Transformer Lab and get a job ID"""
         result = self.server.start_training(json.dumps(config))
         if result["status"] == "started":
             self.job_id = result["job_id"]
             self.config = config
             # Set up logger
             self.create_logger(log_file=self.log_file)
-            self.log_info(f"Registered job with TransformerLab. Job ID: {self.job_id}")
+            self.log_info(f"Registered job with Transformer Lab. Job ID: {self.job_id}")
             return self.job_id
         else:
             error_msg = f"Failed to start job: {result['message']}"
             raise Exception(error_msg)
 
     def report_progress(self, progress, metrics=None):
-        """Report training progress to TransformerLab"""
+        """Report training progress to Transformer Lab"""
         if not self.job_id:
             return True
 
@@ -63,8 +63,8 @@ class TransformerLabClient:
             # Still return True to continue training despite reporting error
             return True
 
-    def complete_job(self, message="Training completed successfully"):
-        """Mark job as complete in TransformerLab"""
+    def complete(self, message="Training completed successfully"):
+        """Mark job as complete in Transformer Lab"""
         if not self.job_id:
             return
 
@@ -79,8 +79,8 @@ class TransformerLabClient:
         except Exception as e:
             self.log_error(f"Error completing job: {e}")
 
-    def stop_job(self, message="Training completed successfully"):
-        """Mark job as complete in TransformerLab"""
+    def stop(self, message="Training completed successfully"):
+        """Mark job as stopped in Transformer Lab"""
         if not self.job_id:
             return
 

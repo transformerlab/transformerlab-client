@@ -11,7 +11,7 @@ from transformers import (AutoModelForCausalLM, AutoTokenizer,
 
 
 def train():
-    """Main training function that runs locally but reports to TransformerLab"""
+    """Main training function that runs locally but reports to Transformer Lab"""
 
     # Training configuration
     training_config = {
@@ -33,9 +33,9 @@ def train():
         },
     }
 
-    # Initialize TransformerLab client
+    # Initialize Transformer Lab client
     tlab_client = TransformerLabClient(server_url="http://localhost:8338/trainer_rpc")
-    job_id = tlab_client.start_job(training_config)
+    job_id = tlab_client.start(training_config)
 
     # Create output directory if it doesn't exist
     os.makedirs(training_config["output_dir"], exist_ok=True)
@@ -50,7 +50,7 @@ def train():
         dataset = load_dataset(training_config["dataset"])
         tlab_client.log_info(f"Loaded dataset with {len(dataset['train'])} training examples")
 
-        # Report progress to TransformerLab
+        # Report progress to Transformer Lab
         tlab_client.report_progress(10, {"status": "dataset_loaded"})
 
         # Load tokenizer and model
@@ -142,8 +142,8 @@ def train():
         training_duration = end_time - start_time
         tlab_client.log_info(f"Training completed in {training_duration}")
 
-        # Complete the job in TransformerLab
-        tlab_client.complete_job()
+        # Complete the job in Transformer Lab
+        tlab_client.complete()
 
         return {
             "status": "success",
@@ -154,7 +154,7 @@ def train():
 
     except KeyboardInterrupt:
         tlab_client.log_warning("Training interrupted by user or remotely")
-        tlab_client.stop_job("Training stopped by user or remotely")
+        tlab_client.stop("Training stopped by user or remotely")
         return {"status": "stopped", "job_id": job_id}
 
     except Exception as e:
@@ -162,7 +162,7 @@ def train():
         import traceback
 
         traceback.print_exc()
-        tlab_client.stop_job(f"Training failed: {str(e)}")
+        tlab_client.stop(f"Training failed: {str(e)}")
         return {"status": "error", "job_id": job_id, "error": str(e)}
 
 
