@@ -3,23 +3,31 @@ import logging
 import os
 import sys
 import time
-import xmlrpc.client
 from datetime import datetime
+from transformerlab_client.rpc_clients.retry_client import RetryableXMLRPCClient
 from logging.handlers import RotatingFileHandler
 
 
 class TransformerLabClient:
     """Client for reporting training progress to Transformer Lab via XML-RPC"""
 
-    def __init__(self, server_url: str = "http://localhost:8338", sdk_version: str = "v1", log_file: str = None):
+    def __init__(
+        self,
+        server_url: str = "http://localhost:8338",
+        sdk_version: str = "v1",
+        log_file: str = None,
+    ):
         """Initialize the XML-RPC client"""
 
         # Validate server URL
         server_url = server_url.rstrip("/") + f"/client/{sdk_version}/jobs"
         if not server_url.startswith("http") and not server_url.startswith("https"):
             raise ValueError("Invalid server URL. Must start with http:// or https://")
-        
-        self.server = xmlrpc.client.ServerProxy(server_url)
+
+        # self.server = xmlrpc.client.ServerProxy(server_url)
+        self.server = RetryableXMLRPCClient(
+            server_url, max_retries=3, retry_delay=1, timeout=30
+        )
         self.job_id = None
         self.config = {}
         self.last_report_time = 0
@@ -120,11 +128,17 @@ class TransformerLabClient:
         try:
             if hasattr(self.server, "update_output_file"):
                 # Use the dedicated update_output_file method if it exists
-                self.server.update_output_file(self.job_id, os.path.abspath(self.log_file_path))
+                self.server.update_output_file(
+                    self.job_id, os.path.abspath(self.log_file_path)
+                )
             else:
-                print("There was an issue with updating output.txt within Transformer Lab app.")
+                print(
+                    "There was an issue with updating output.txt within Transformer Lab app."
+                )
         except Exception as e:
-            print(f"There was an issue with updating output.txt within Transformer Lab app: {str(e)}")
+            print(
+                f"There was an issue with updating output.txt within Transformer Lab app: {str(e)}"
+            )
             raise e
 
     def create_logger(self, log_file=None, level=logging.INFO):
@@ -132,6 +146,7 @@ class TransformerLabClient:
         # Create logger
         self.logger = logging.getLogger("transformerlab")
         self.logger.setLevel(level)
+        self.logger.propagate = False
         self.logger.handlers = []  # Clear any existing handlers
 
         # Create formatter

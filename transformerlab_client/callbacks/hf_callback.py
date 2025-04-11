@@ -12,7 +12,9 @@ class TLabProgressCallback(TrainerCallback):
                 progress = 30 + ((state.global_step / state.max_steps) * 60)
                 metrics = {
                     "step": state.global_step,
-                    "train/loss": state.log_history[-1]["loss"] if state.log_history else None,
+                    "train/loss": state.log_history[-1]["loss"]
+                    if state.log_history
+                    else None,
                 }
                 # Report progress to Transformer Lab
                 if not self.tlab_client.report_progress(progress, metrics):
@@ -26,4 +28,6 @@ class TLabProgressCallback(TrainerCallback):
             for key, value in logs.items():
                 if isinstance(value, (int, float)):
                     metrics[key] = value
-            self.tlab_client.report_progress(30 + ((state.global_step / state.max_steps) * 60), metrics)
+            self.tlab_client.report_progress(
+                30 + ((state.global_step / state.max_steps) * 60), metrics
+            )
