@@ -16,7 +16,7 @@ class TransformerLabClient:
 
         # Validate server URL
         server_url = server_url.rstrip("/") + f"/client/{sdk_version}/jobs"
-        if not server_url.startswith("http") or not server_url.startswith("https"):
+        if not server_url.startswith("http") and not server_url.startswith("https"):
             raise ValueError("Invalid server URL. Must start with http:// or https://")
         
         self.server = xmlrpc.client.ServerProxy(server_url)
