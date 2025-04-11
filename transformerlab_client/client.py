@@ -15,7 +15,7 @@ class TransformerLabClient:
         """Initialize the XML-RPC client"""
 
         # Validate server URL
-        server_url = server_url.rstrip("/") + f"/{sdk_version}/sdk"
+        server_url = server_url.rstrip("/") + f"/client/{sdk_version}/jobs"
         if not server_url.startswith("http") or not server_url.startswith("https"):
             raise ValueError("Invalid server URL. Must start with http:// or https://")
         
