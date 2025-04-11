@@ -12,7 +12,7 @@ pip install transformerlab-client
 
 - Python 3.10 or newer
 - A running instance of the Transformer Lab API server
-  - By default, the client connects to `http://localhost:8338/trainer_rpc`
+  - By default, the client connects to `http://localhost:8338`
   - Make sure the Transformer Lab application is running before using this client
 
 ## Usage

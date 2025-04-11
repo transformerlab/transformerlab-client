@@ -34,7 +34,7 @@ def train():
     }
 
     # Initialize Transformer Lab client
-    tlab_client = TransformerLabClient(server_url="http://localhost:8338/trainer_rpc")
+    tlab_client = TransformerLabClient(server_url="http://localhost:8338")
     job_id = tlab_client.start(training_config)
 
     # Create output directory if it doesn't exist
