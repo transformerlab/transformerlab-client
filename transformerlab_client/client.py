@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 import time
-import xmlrpc.client
 from datetime import datetime
 from transformerlab_client.rpc_clients.retry_client import RetryableXMLRPCClient
 from logging.handlers import RotatingFileHandler
@@ -19,10 +18,12 @@ class TransformerLabClient:
         log_file: str = None,
     ):
         """Initialize the XML-RPC client"""
+
         # Validate server URL
         server_url = server_url.rstrip("/") + f"/client/{sdk_version}/jobs"
         if not server_url.startswith("http") and not server_url.startswith("https"):
             raise ValueError("Invalid server URL. Must start with http:// or https://")
+        
         # self.server = xmlrpc.client.ServerProxy(server_url)
         self.server = RetryableXMLRPCClient(
             server_url, max_retries=3, retry_delay=1, timeout=30
@@ -150,6 +151,7 @@ class TransformerLabClient:
         # Create logger
         self.logger = logging.getLogger("transformerlab")
         self.logger.setLevel(level)
+        self.logger.propagate = False
         self.logger.handlers = []  # Clear any existing handlers
 
         # Create formatter
