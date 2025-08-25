@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 import time
+import xmlrpc.client
 from datetime import datetime
 from transformerlab_client.rpc_clients.retry_client import RetryableXMLRPCClient
 from logging.handlers import RotatingFileHandler
@@ -18,18 +19,17 @@ class TransformerLabClient:
         log_file: str = None,
     ):
         """Initialize the XML-RPC client"""
-
         # Validate server URL
         server_url = server_url.rstrip("/") + f"/client/{sdk_version}/jobs"
         if not server_url.startswith("http") and not server_url.startswith("https"):
             raise ValueError("Invalid server URL. Must start with http:// or https://")
-
         # self.server = xmlrpc.client.ServerProxy(server_url)
         self.server = RetryableXMLRPCClient(
             server_url, max_retries=3, retry_delay=1, timeout=30
         )
         self.job_id = None
         self.config = {}
+        self.experiment_id = None  # Will be set by server when job starts
         self.last_report_time = 0
         self.report_interval = 1  # seconds
         self.log_file = log_file
@@ -39,10 +39,15 @@ class TransformerLabClient:
         result = self.server.start_training(json.dumps(config))
         if result["status"] == "started":
             self.job_id = result["job_id"]
+            # Update experiment_id from server response to ensure consistency
+            if "experiment_id" in result:
+                self.experiment_id = result["experiment_id"]
             self.config = config
             # Set up logger
             self.create_logger(log_file=self.log_file)
-            self.log_info(f"Registered job with Transformer Lab. Job ID: {self.job_id}")
+            self.log_info(
+                f"Registered job with Transformer Lab. Job ID: {self.job_id}, Experiment ID: {self.experiment_id}"
+            )
             return self.job_id
         else:
             error_msg = f"Failed to start job: {result['message']}"
@@ -61,11 +66,12 @@ class TransformerLabClient:
         self.last_report_time = current_time
 
         try:
-            status = self.server.get_training_status(self.job_id, int(progress))
+            # The server expects: job_id, experiment_id, progress_update
+            status = self.server.get_training_status(self.job_id, self.experiment_id, int(progress))
 
             # If metrics are important, consider logging them separately
             if metrics and hasattr(self.server, "log_metrics"):
-                self.server.log_metrics(self.job_id, json.dumps(metrics))
+                self.server.log_metrics(self.job_id, self.experiment_id, json.dumps(metrics))
 
             if status.get("status") == "stopped":
                 self.log_info("Job was stopped remotely. Terminating training...")
@@ -85,27 +91,29 @@ class TransformerLabClient:
         try:
             # Use the dedicated complete_job method if it exists
             if hasattr(self.server, "complete_job"):
-                self.server.complete_job(self.job_id, "COMPLETE", message)
+                # The server expects: job_id, experiment_id, status, message
+                self.server.complete_job(self.job_id, self.experiment_id, "COMPLETE", message)
             else:
                 # Fall back to using get_training_status with 100% progress
                 self.report_progress(100)
-                self.server.get_training_status(self.job_id, 100)
+                self.server.get_training_status(self.job_id, self.experiment_id, 100)
         except Exception as e:
             self.log_error(f"Error completing job: {e}")
 
     def stop(self, message="Training completed successfully"):
-        """Mark job as stopped in Transformer Lab"""
+        """Mark job as complete in Transformer Lab"""
         if not self.job_id:
             return
 
         try:
             # Use the dedicated complete_job method if it exists
             if hasattr(self.server, "complete_job"):
-                self.server.complete_job(self.job_id, "STOPPED", message)
+                # The server expects: job_id, experiment_id, status, message
+                self.server.complete_job(self.job_id, self.experiment_id, "STOPPED", message)
             else:
                 # Fall back to using get_training_status with 100% progress
                 self.report_progress(100)
-                self.server.get_training_status(self.job_id, 100)
+                self.server.get_training_status(self.job_id, self.experiment_id, 100)
         except Exception as e:
             self.log_error(f"Error completing job: {e}")
 
@@ -117,8 +125,8 @@ class TransformerLabClient:
         try:
             # Use the dedicated save_model method if it exists
             if hasattr(self.server, "save_model"):
-                self.server.save_model(self.job_id, os.path.abspath(saved_model_path))
-
+                # The server expects: job_id, experiment_id, local_model_path
+                self.server.save_model(self.job_id, self.experiment_id, os.path.abspath(saved_model_path))
             else:
                 self.log_warning("save_model method not available in server.")
         except Exception as e:
@@ -128,25 +136,20 @@ class TransformerLabClient:
         try:
             if hasattr(self.server, "update_output_file"):
                 # Use the dedicated update_output_file method if it exists
-                self.server.update_output_file(
-                    self.job_id, os.path.abspath(self.log_file_path)
-                )
+                # The server expects: job_id, experiment_id, output_file
+                self.server.update_output_file(self.job_id, self.experiment_id, os.path.abspath(self.log_file_path))
             else:
-                print(
-                    "There was an issue with updating output.txt within Transformer Lab app."
-                )
+                print("There was an issue with updating output.txt within Transformer Lab app.")
         except Exception as e:
-            print(
-                f"There was an issue with updating output.txt within Transformer Lab app: {str(e)}"
-            )
-            raise e
+            print(f"There was an issue with updating output.txt within Transformer Lab app: {str(e)}")
+            # Don't raise the exception, just log it to avoid breaking the training flow
+            pass
 
     def create_logger(self, log_file=None, level=logging.INFO):
         """Initialize logger with both file and console output"""
         # Create logger
         self.logger = logging.getLogger("transformerlab")
         self.logger.setLevel(level)
-        self.logger.propagate = False
         self.logger.handlers = []  # Clear any existing handlers
 
         # Create formatter
