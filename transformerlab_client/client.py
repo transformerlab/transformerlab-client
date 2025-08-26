@@ -23,7 +23,7 @@ class TransformerLabClient:
         server_url = server_url.rstrip("/") + f"/client/{sdk_version}/jobs"
         if not server_url.startswith("http") and not server_url.startswith("https"):
             raise ValueError("Invalid server URL. Must start with http:// or https://")
-        
+
         # self.server = xmlrpc.client.ServerProxy(server_url)
         self.server = RetryableXMLRPCClient(
             server_url, max_retries=3, retry_delay=1, timeout=30
@@ -67,7 +67,6 @@ class TransformerLabClient:
         self.last_report_time = current_time
 
         try:
-            # The server expects: job_id, experiment_id, progress_update
             status = self.server.get_training_status(self.job_id, self.experiment_id, int(progress))
 
             # If metrics are important, consider logging them separately
@@ -92,7 +91,6 @@ class TransformerLabClient:
         try:
             # Use the dedicated complete_job method if it exists
             if hasattr(self.server, "complete_job"):
-                # The server expects: job_id, experiment_id, status, message
                 self.server.complete_job(self.job_id, self.experiment_id, "COMPLETE", message)
             else:
                 # Fall back to using get_training_status with 100% progress
@@ -109,7 +107,6 @@ class TransformerLabClient:
         try:
             # Use the dedicated complete_job method if it exists
             if hasattr(self.server, "complete_job"):
-                # The server expects: job_id, experiment_id, status, message
                 self.server.complete_job(self.job_id, self.experiment_id, "STOPPED", message)
             else:
                 # Fall back to using get_training_status with 100% progress
@@ -126,7 +123,6 @@ class TransformerLabClient:
         try:
             # Use the dedicated save_model method if it exists
             if hasattr(self.server, "save_model"):
-                # The server expects: job_id, experiment_id, local_model_path
                 self.server.save_model(self.job_id, self.experiment_id, os.path.abspath(saved_model_path))
             else:
                 self.log_warning("save_model method not available in server.")
@@ -137,7 +133,6 @@ class TransformerLabClient:
         try:
             if hasattr(self.server, "update_output_file"):
                 # Use the dedicated update_output_file method if it exists
-                # The server expects: job_id, experiment_id, output_file
                 self.server.update_output_file(self.job_id, self.experiment_id, os.path.abspath(self.log_file_path))
             else:
                 print("There was an issue with updating output.txt within Transformer Lab app.")
